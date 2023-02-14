@@ -3,6 +3,8 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const { urlencoded } = require("express");
 const app = express();
+// import { db, runQueries } from "./workinman_db";
+const { db, runQueries } = require("./workinman_db");
 
 const PORT = 3232;
 
@@ -22,8 +24,15 @@ app.post("/", (req, res) => {
   console.log(req.body);
 
   const { username, password } = req.body;
-  // console.log("this is username: " + username);
-  // console.log("this is password: " + password);
+  const queries = [
+    `
+  select username from users where username = '${username}';
+  `,
+    `
+  select password from users where password = '${password}';
+  `,
+  ];
+  runQueries(db, queries);
 });
 
 app.listen(PORT, () => {
