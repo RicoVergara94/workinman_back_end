@@ -3,12 +3,13 @@ const e = require("express");
 let sqlite3 = require("sqlite3").verbose();
 
 let db = new sqlite3.Database(
-  "./workinkman.db",
+  "./workinman_db.db",
   sqlite3.OPEN_READWRITE,
   (err) => {
     if (err && err.code === "SQLITE_CANTOPEN") {
-      // console.log(err);
-      createDatabase();
+      console.log("we're inside here right now");
+      console.log(err);
+      // createDatabase();
       return;
     } else if (err) {
       console.log("getting error " + err);
@@ -20,6 +21,7 @@ let db = new sqlite3.Database(
 const createDatabase = () => {
   let newdb = new sqlite3.Database("./workinman_db.db", (err) => {
     if (err) {
+      // console.log("We're inside here right now " + err);
       console.log("Getting error " + err);
       exit(1);
     }
@@ -45,13 +47,39 @@ const createTables = (newdb) => {
   );
 };
 
-const runQueries = (db, query) => {
-  db.all(query, (err, rows) => {
-    rows.forEach((row) => {
-      console.log(row);
+const runQueries = (db, queries) => {
+  queries.map((query) => {
+    db.all(query, (err, rows) => {
+      // console.log("this is rows: " + rows);
+      rows.forEach((row) => {
+        console.log(row);
+      });
     });
   });
 };
+
+// const authenticate = (db, query) => {
+//   db.get(query, [], (res) => {
+//     console.log(res);
+//   });
+// };
+const authenticateUsername = (db, query, usernameValue) => {
+  db.get(query, [], (err, row) => {
+    console.log(row);
+    usernameValue = true;
+  });
+};
+const authenticatePassword = (db, query, passwordValue) => {
+  db.get(query, [], (err, row) => {
+    console.log(row);
+    passwordValue = true;
+  });
+};
+// const runQueries = (db, query) => {
+//   query.map((row) => {
+//     db.run(row, [], () => console.log(row));
+//   });
+// };
 // createTables(db);
 // runQueries(db);
 
@@ -67,15 +95,15 @@ const runQueries = (db, query) => {
 //   console.log("value is null");
 // }
 
-const queries = [
-  `
-select username from users where username = 'oscar.vergara1994@gmail.com';
-`,
-  `
-select password from users where password = 'Hello123';
-`,
-];
+// const queries = [
+//   `
+// select username from users where username = 'oscar.vergara1994@gmail.com';
+// `,
+//   `
+// select password from users where password = 'Hello123';
+// `,
+// ];
 
-queries.map((query) => runQueries(db, query));
+// queries.map((query) => runQueries(db, query));
 
-module.exports = { db, runQueries };
+module.exports = { db, runQueries, authenticateUsername, authenticatePassword };
