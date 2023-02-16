@@ -58,6 +58,12 @@ const runQueries = (db, queries) => {
   });
 };
 
+const runQuery = (db, query) => {
+  db.get(db, query, (err, rows) => {
+    console.log(rows);
+  });
+};
+
 // const authenticate = (db, query) => {
 //   db.get(query, [], (res) => {
 //     console.log(res);
@@ -73,6 +79,47 @@ const authenticatePassword = (db, query, passwordValue) => {
   db.get(query, [], (err, row) => {
     console.log(row);
     passwordValue = true;
+  });
+};
+const authenticateUsernameAndPassword = (
+  // may not need this function any longer
+  db,
+  query,
+  usernameAndPasswordAuthenticated
+) => {
+  db.get(query, [], (err, row) => {
+    usernameAndPasswordAuthenticated.push(row);
+  });
+};
+const authenticateUsernameAndPasswordPromise = (db, query) => {
+  return new Promise((res, rej) => {
+    db.get(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
+
+const insertUsernameAndPassword = (
+  db,
+  username,
+  password,
+  usernameAndPasswordValue
+) => {
+  console.log("inside the insert function");
+  const insertQuery = `INSERT INTO users (username, password) VALUES ('${username}', '${password}');`;
+  const usernameAndPasswordQuery = `select username from users where username = '${username}' AND password = '${password}';`;
+  db.get(insertQuery, [], (err, row) => {
+    console.log(row);
+    (() => {
+      db.get(usernameAndPasswordQuery, [], (err, row) => {
+        console.log(row);
+      });
+    })();
+    usernameAndPasswordValue = true;
   });
 };
 // const runQueries = (db, query) => {
@@ -106,4 +153,12 @@ const authenticatePassword = (db, query, passwordValue) => {
 
 // queries.map((query) => runQueries(db, query));
 
-module.exports = { db, runQueries, authenticateUsername, authenticatePassword };
+module.exports = {
+  db,
+  runQuery,
+  authenticateUsername,
+  authenticatePassword,
+  authenticateUsernameAndPassword,
+  authenticateUsernameAndPasswordPromise,
+  insertUsernameAndPassword,
+};
