@@ -9,6 +9,9 @@ const {
   runQueries,
   authenticateUsername,
   authenticatePassword,
+  authenticateUsernameAndPassword,
+  authenticateUsernameAndPasswordPromise,
+  insertUsernameAndPassword,
 } = require("./workinman_db");
 
 const PORT = 3232;
@@ -25,36 +28,38 @@ app.get("/", (req, res) => {
   res.json("Hello World");
 });
 
-app.post("/", (req, res) => {
-  console.log(req.body);
-
+app.post("/", async (req, res) => {
   const { username, password } = req.body;
-  // const queries = [
-  //   `
-  // select username from users where username = '${username}';
-  // `,
-  //   `
-  // select password from users where password = '${password}';
-  // `,
-  // ];
-  const usernameQuery = `select username from users where username = '${username}';`;
 
-  const passwordQuery = `select password from users where password = '${password}';`;
-  // console.log("here right now");
-  // console.log(db);
-  // runQueries(db, queries);
-  // queries.map((q) => authenticate(q));
-  let usernameValue = new Boolean(false);
-  authenticateUsername(db, usernameQuery, usernameValue);
-  console.log(usernameValue);
-  let passwordValue = new Boolean(false);
-  authenticatePassword(db, passwordQuery, passwordValue);
-  console.log(passwordValue);
-  if (usernameValue && passwordValue) {
+  const usernameAndPasswordQuery = `select username from users where username = '${username}' AND password = '${password}';`;
+  let usernameAndPasswordAuthenticated = [1, 2];
+
+  const row = await authenticateUsernameAndPasswordPromise(
+    db,
+    usernameAndPasswordQuery,
+    usernameAndPasswordAuthenticated
+  );
+
+  console.log("this is foo: " + JSON.stringify(row));
+
+  if (row) {
     console.log("user is authenticated");
   } else {
     console.log("user is missing");
   }
+});
+
+app.post("/register", (req, res) => {
+  const { username, password } = req.body;
+  console.log("this is registers username: " + username);
+  console.log("this is registers password: " + password);
+  // TODO: Create a query to add username and password to table now;
+  const insertQuery = `INSERT INTO users (username, password) VALUES ('${username}', '${password}');`;
+
+  let usernameAndPasswordValue = new Boolean(false);
+  console.log("usernameAndPasswordValue before: " + usernameAndPasswordValue);
+  insertUsernameAndPassword(db, username, password, usernameAndPasswordValue);
+  console.log("usernameAndPasswordValue after: " + usernameAndPasswordValue);
 });
 
 app.listen(PORT, () => {
