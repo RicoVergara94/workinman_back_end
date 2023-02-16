@@ -9,7 +9,7 @@ let db = new sqlite3.Database(
     if (err && err.code === "SQLITE_CANTOPEN") {
       console.log("we're inside here right now");
       console.log(err);
-      // createDatabase();
+      createDatabase();
       return;
     } else if (err) {
       console.log("getting error " + err);
@@ -30,18 +30,19 @@ const createDatabase = () => {
 };
 
 const createTables = (newdb) => {
+  // may need to make id not null again if autoincrement doesn't work
   newdb.exec(
     `
     create table users (
-        id int primary key not null,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         username text not null,
         password text not null,
         salt text not null
     );
-    insert into users (id, username, password, salt)
-        values (1, 'oscar.vergara1994@gmail.com', 'Hello123', 'saltOne'),
-               (2, 'ricardo.vergara1994@gmail.com', 'password123', 'saltTwo'),
-               (3, 'rico.vergara1994@gmail.com', 'Hakuna', 'saltThree');
+    insert into users (username, password, salt)
+        values ('oscar.vergara1994@gmail.com', 'Hello123', 'saltOne'),
+               ('ricardo.vergara1994@gmail.com', 'password123', 'saltTwo'),
+               ('rico.vergara1994@gmail.com', 'Hakuna', 'saltThree');
 
     `
   );
@@ -122,6 +123,19 @@ const insertUsernameAndPassword = (
     usernameAndPasswordValue = true;
   });
 };
+
+const insertUsernameAndPasswordPromise = (db, query) => {
+  return new Promise((res, rej) => {
+    console.log("we are here righ now");
+    db.get(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
 // const runQueries = (db, query) => {
 //   query.map((row) => {
 //     db.run(row, [], () => console.log(row));
@@ -161,4 +175,5 @@ module.exports = {
   authenticateUsernameAndPassword,
   authenticateUsernameAndPasswordPromise,
   insertUsernameAndPassword,
+  insertUsernameAndPasswordPromise,
 };
