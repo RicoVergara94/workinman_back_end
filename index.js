@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { urlencoded } = require("express");
+const crypto = require("crypto");
+const bcrypt = require('bcrypt');
 const app = express();
 // import { db, runQueries } from "./workinman_db";
 const {
@@ -64,3 +66,17 @@ app.post("/register", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });
+
+const generateSalt = () => {
+  const salt = crypto.randomBytes(16).toString("hex");
+  return salt;
+};
+
+const combineSaltAndPassword = (salt, password) => {
+  const combinedSaltAndPasswordString = salt + password;
+  return combinedSaltAndPasswordString;
+};
+
+const hashSaltAndPasswordCombination = (saltAndPasswordCombination) => {
+  const hash = 
+}
