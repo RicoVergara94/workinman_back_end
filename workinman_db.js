@@ -124,7 +124,7 @@ const insertUsernameAndPassword = (
   });
 };
 
-const insertUsernameAndPasswordPromise = (db, query) => {
+const insertUsernamePasswordSaltPromise = (db, query) => {
   return new Promise((res, rej) => {
     console.log("we are here righ now");
     db.get(query, [], (err, row) => {
@@ -167,13 +167,41 @@ const insertUsernameAndPasswordPromise = (db, query) => {
 
 // queries.map((query) => runQueries(db, query));
 
+const getAllAccountsPromise = async (db) => {
+  const query = "SELECT * FROM users;";
+  return new Promise((res, rej) => {
+    console.log("we are here righ now");
+    db.all(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
+const getCountOfAllAccountsPromise = async (db) => {
+  const query = "SELECT COUNT(*) FROM users;";
+  return new Promise((res, rej) => {
+    console.log("we are here righ now");
+    db.get(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
+
 module.exports = {
   db,
+  getAllAccountsPromise,
+  getCountOfAllAccountsPromise,
   runQuery,
   authenticateUsername,
   authenticatePassword,
   authenticateUsernameAndPassword,
   authenticateUsernameAndPasswordPromise,
-  insertUsernameAndPassword,
-  insertUsernameAndPasswordPromise,
+  insertUsernamePasswordSaltPromise,
 };
