@@ -70,6 +70,18 @@ const runQuery = (db, query) => {
 //     console.log(res);
 //   });
 // };
+const doesUsernameExistInDbPromise = async (db, username) => {
+  const query = `SELECT username FROM users WHERE username = '${username}';`;
+  return new Promise((res, rej) => {
+    db.get(query, [], (err, rows) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(rows);
+      }
+    });
+  });
+};
 const authenticateUsername = (db, query, usernameValue) => {
   db.get(query, [], (err, row) => {
     console.log(row);
@@ -196,6 +208,7 @@ const getCountOfAllAccountsPromise = async (db) => {
 
 module.exports = {
   db,
+  doesUsernameExistInDbPromise,
   getAllAccountsPromise,
   getCountOfAllAccountsPromise,
   runQuery,
