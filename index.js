@@ -9,6 +9,7 @@ const app = express();
 const {
   db,
   runQueries,
+  doesUsernameExistInDbPromise,
   getAllAccountsPromise,
   getCountOfAllAccountsPromise,
   authenticateUsername,
@@ -56,8 +57,17 @@ app.post("/", async (req, res) => {
 });
 
 app.post("/register", async (req, res) => {
+  //TODO: I have to verify that the username and password do not exist already before adding to the database
   const { username, password } = req.body;
   // generate salt
+  const doesUsernameAlreadyExist = await doesUsernameExistInDbPromise(
+    db,
+    username
+  );
+  if (doesUsernameAlreadyExist) {
+    console.log("username already exists");
+    return;
+  }
   const salt = await generateSalt();
 
   const hashedPasswordWithSalt = await hashPasswordWithSalt(salt, password);
