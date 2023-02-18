@@ -36,8 +36,28 @@ app.get("/", (req, res) => {
 
 app.post("/", async (req, res) => {
   const { username, password } = req.body;
+  // take the password DONE
+  // add salt in table to password
+  // hash password combined with salt with bcrypt
+  // compare to password in database
+  const { salt } = await new Promise((res, rej) => {
+    const query = `select * from users where username='${username}';`;
+    db.get(query, [], (err, rows) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(rows);
+      }
+    });
+  });
+  // console.log("this is salt: " + salt);
+  // console.log("this is myRow: " + myRow);
 
-  const usernameAndPasswordQuery = `select username from users where username = '${username}' AND password = '${password}';`;
+  // const passwordWithSalt = password + salt;
+
+  const hashedPasswordWithSalt = await hashPasswordWithSalt(salt, password);
+
+  const usernameAndPasswordQuery = `select username from users where username = '${username}' AND password = '${hashedPasswordWithSalt}';`;
 
   const row = await authenticateUsernameAndPasswordPromise(
     db,
@@ -50,14 +70,13 @@ app.post("/", async (req, res) => {
     console.log("user is missing");
   }
 
-  const allAccounts = await getAllAccountsPromise(db);
-  console.log(allAccounts);
-  const count = await getCountOfAllAccountsPromise(db);
-  console.log(count);
+  // const allAccounts = await getAllAccountsPromise(db);
+  // console.log(allAccounts);
+  // const count = await getCountOfAllAccountsPromise(db);
+  // console.log(count);
 });
 
 app.post("/register", async (req, res) => {
-  //TODO: I have to verify that the username and password do not exist already before adding to the database
   const { username, password } = req.body;
   // generate salt
   const doesUsernameAlreadyExist = await doesUsernameExistInDbPromise(
@@ -75,16 +94,10 @@ app.post("/register", async (req, res) => {
   const query = `INSERT INTO users (username, password, salt) VALUES ('${username}', '${hashedPasswordWithSalt}', '${salt}');`;
   console.log("this is registers username: " + username);
   console.log("this is registers password: " + password);
-  // TODO: Create a query to add username and password to table now;
-  // const query = `INSERT INTO users (username, password) VALUES ('${username}', '${password}');`;
-  // const query = `INSERT INTO users (username, password) VALUES ('${username}', '${password}');`;
-  // let usernameAndPasswordValue = new Boolean(false);
-  // console.log("usernameAndPasswordValue before: " + usernameAndPasswordValue);
-  // insertUsernameAndPassword(db, username, password, usernameAndPasswordValue);
-  // console.log("usernameAndPasswordValue after: " + usernameAndPasswordValue);
+
   const row = await insertUsernamePasswordSaltPromise(db, query);
   const allAccounts = await getAllAccountsPromise(db);
-  // console.log("this is row: " + row);
+
   console.log(allAccounts);
 });
 
@@ -97,18 +110,17 @@ const generateSalt = async () => {
   return salt;
 };
 
-// const combineSaltAndPassword = (salt, password) => {
-//   const combinedSaltAndPasswordString = salt + password;
-//   return combinedSaltAndPasswordString;
-// };
-
-// const hashSaltAndPasswordCombination = async (saltAndPasswordCombination) => {
-//   const hash = await bcrypt.gen
-// }
-
 const hashPasswordWithSalt = async (salt, password) => {
   // Combine the salt and the password, and then hash the combination
   const hashedPassword = await bcrypt.hash(password, salt);
 
   return hashedPassword;
 };
+
+db.all("select * from users;", [], (err, rows) => {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log(rows);
+  }
+});
