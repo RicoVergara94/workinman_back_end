@@ -1,3 +1,4 @@
+const bcrypt = require("bcrypt");
 const e = require("express");
 
 let sqlite3 = require("sqlite3").verbose();
@@ -88,6 +89,20 @@ const authenticateUsername = (db, query, usernameValue) => {
     usernameValue = true;
   });
 };
+
+const authenticateUsernamePromise = (db, username) => {
+  return new Promise((res, rej) => {
+    const query = `select username from users where username='${username}';`;
+    db.get(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
+
 const authenticatePassword = (db, query, passwordValue) => {
   db.get(query, [], (err, row) => {
     console.log(row);
@@ -104,7 +119,12 @@ const authenticateUsernameAndPassword = (
     usernameAndPasswordAuthenticated.push(row);
   });
 };
-const authenticateUsernameAndPasswordPromise = (db, query) => {
+const authenticateUsernameAndPasswordPromise = async (
+  db,
+  username,
+  password
+) => {
+  const query = `select username from users where username='${username}' AND password='${password}';`;
   return new Promise((res, rej) => {
     db.get(query, [], (err, row) => {
       if (err) {
@@ -136,9 +156,27 @@ const insertUsernameAndPassword = (
   });
 };
 
-const insertUsernamePasswordSaltPromise = (db, query) => {
+const insertUsernamePasswordSaltPromise = async (
+  db,
+  username,
+  hashedPasswordWithSalt,
+  salt
+) => {
+  const query = `INSERT INTO users (username, password, salt) VALUES ('${username}', '${hashedPasswordWithSalt}', '${salt}');`;
   return new Promise((res, rej) => {
-    console.log("we are here righ now");
+    db.get(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
+
+const deleteRecordPromise = async (db, username) => {
+  const query = `delete from users where username='${username}';`;
+  return new Promise((res, rej) => {
     db.get(query, [], (err, row) => {
       if (err) {
         rej(err);
@@ -179,6 +217,24 @@ const insertUsernamePasswordSaltPromise = (db, query) => {
 
 // queries.map((query) => runQueries(db, query));
 
+const getSaltPromise = async (db, username) => {
+  const query = `select salt from users where username='${username}';`;
+  return new Promise((res, rej) => {
+    db.get(query, [], (err, row) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(row);
+      }
+    });
+  });
+};
+
+const getPasswordAndSaltHash = async (password, salt) => {
+  const passwordAndSaltHash = await bcrypt.hash(password, salt);
+  return passwordAndSaltHash;
+};
+
 const getAllAccountsPromise = async (db) => {
   const query = "SELECT * FROM users;";
   return new Promise((res, rej) => {
@@ -209,12 +265,16 @@ const getCountOfAllAccountsPromise = async (db) => {
 module.exports = {
   db,
   doesUsernameExistInDbPromise,
+  getSaltPromise,
+  getPasswordAndSaltHash,
   getAllAccountsPromise,
   getCountOfAllAccountsPromise,
   runQuery,
   authenticateUsername,
+  authenticateUsernamePromise,
   authenticatePassword,
   authenticateUsernameAndPassword,
   authenticateUsernameAndPasswordPromise,
+  deleteRecordPromise,
   insertUsernamePasswordSaltPromise,
 };
