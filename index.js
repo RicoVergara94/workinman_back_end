@@ -162,10 +162,11 @@ app.post("/delete/password", async (req, res) => {
 
 app.post("/upload-image", upload.single("image"), async (req, res) => {
   const file = req.file;
+  // edit the images with dependency
 
   try {
     await uploadFile(file);
-    res.status(200).send("Image uploaded successfully to S3 bucket");
+    res.status(200).send("Image uploaded successfully!");
   } catch (e) {
     console.log("Error message: " + e);
     res.status(500).send("failed to upload image");

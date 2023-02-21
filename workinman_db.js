@@ -45,6 +45,20 @@ const createTables = (newdb) => {
                ('ricardo.vergara1994@gmail.com', 'password123', 'saltTwo'),
                ('rico.vergara1994@gmail.com', 'Hakuna', 'saltThree');
 
+
+    create table questions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username text not null,
+        question_id text not null,
+        question_text text not null,
+        correct_answer text not null,
+        incorrect_answer1 text not null,
+        incorrect_answer2 text not null,
+        incorrect_answer3 text not null,
+        difficulty_level INTEGER not null, 
+        image_name text not null
+    );
+
     `
   );
 };
