@@ -16,8 +16,6 @@ const s3 = new S3Client({
 });
 
 async function uploadFile(file) {
-  //   const fileStream = fs.createReadStream(file.path);
-
   const uploadParams = {
     Bucket: bucketName,
     Key: file.originalname,
@@ -31,10 +29,9 @@ async function uploadFile(file) {
     console.log("Image uploaded successfully");
   } catch (e) {
     console.log("Error Message: " + e);
+    throw new Error("Failed to upload image");
   } finally {
   }
-
-  //   return s3.upload(uploadParams).promise();
 }
 exports.uploadFile = uploadFile;
 

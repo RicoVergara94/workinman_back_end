@@ -162,10 +162,14 @@ app.post("/delete/password", async (req, res) => {
 
 app.post("/upload-image", upload.single("image"), async (req, res) => {
   const file = req.file;
-  // req.file.buffer is what we need to send to the s3 bucket
 
-  const result = await uploadFile(file);
-  console.log("this is result: " + result);
+  try {
+    await uploadFile(file);
+    res.status(200).send("Image uploaded successfully to S3 bucket");
+  } catch (e) {
+    console.log("Error message: " + e);
+    res.status(500).send("failed to upload image");
+  }
 });
 
 app.listen(PORT, () => {
