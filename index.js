@@ -1,13 +1,16 @@
 const express = require("express");
-const { S3Client } = require("@aws-sdk/client-s3");
-require("dotenv").config();
+const fs = require("fs");
+const util = require("util");
+const unlinkFile = util.promisify(fs.unlink);
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const { urlencoded } = require("express");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
+const { uploadFile, getFileStream, PutObjectCommand } = require("./s3");
 const app = express();
-// import { db, runQueries } from "./workinman_db";
+
 const {
   db,
   runQueries,
@@ -26,9 +29,16 @@ const {
   deleteRecordPromise,
 } = require("./workinman_db");
 
+const storage = multer.memoryStorage();
+
+const upload = multer({ storage: storage });
+
 const PORT = 3232;
 
-const s3 = new S3Client({ region: process.env.BUCKET_REGION });
+const bucketName = process.env.BUCKET_NAME;
+const bucketRegion = process.env.BUCKET_REGION;
+const accessKey = process.env.ACCESS_KEY;
+const secretAccessKey = process.env.SECRET_ACCESS_KEY;
 
 // const corsOptions = {
 //   origin: "https://example.com",
@@ -42,12 +52,8 @@ app.get("/", (req, res) => {
 
 app.post("/", async (req, res) => {
   const { username, password } = req.body;
-  // TODO: need error handling for when account does not exist
-  // console.log(username);
 
   const usernameData = await authenticateUsernamePromise(db, username);
-  // console.log(usernameData);
-  // console.log(data);
   const { salt } = await new Promise((res, rej) => {
     const query = `select * from users where username='${username}';`;
     db.get(query, [], (err, rows) => {
@@ -76,16 +82,10 @@ app.post("/", async (req, res) => {
     console.log("user is missing");
     res.status(409).send("Username does not exist");
   }
-
-  // const allAccounts = await getAllAccountsPromise(db);
-  // console.log(allAccounts);
-  // const count = await getCountOfAllAccountsPromise(db);
-  // console.log(count);
 });
 
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
-  // generate salt
   const doesUsernameAlreadyExist = await doesUsernameExistInDbPromise(
     db,
     username
@@ -105,7 +105,6 @@ app.post("/register", async (req, res) => {
     hashedPasswordWithSalt,
     salt
   );
-  // const allAccounts = await getAllAccountsPromise(db);
   const query = `select * from users where username='${username}';`;
   const row = await new Promise((res, rej) => {
     db.get(query, [], (err, rows) => {
@@ -116,8 +115,6 @@ app.post("/register", async (req, res) => {
       }
     });
   });
-
-  // console.log(row);
   if (row) {
     res.status(200).send("Account succesfully created!");
   } else {
@@ -161,6 +158,14 @@ app.post("/delete/password", async (req, res) => {
     console.log("user and password are NOT in database");
     res.status(404).send("username and password are not in database");
   }
+});
+
+app.post("/upload-image", upload.single("image"), async (req, res) => {
+  const file = req.file;
+  // req.file.buffer is what we need to send to the s3 bucket
+
+  const result = await uploadFile(file);
+  console.log("this is result: " + result);
 });
 
 app.listen(PORT, () => {
