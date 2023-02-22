@@ -58,7 +58,6 @@ const createTables = (newdb) => {
         difficulty_level INTEGER not null, 
         image_name text not null
     );
-
     `
   );
 };
