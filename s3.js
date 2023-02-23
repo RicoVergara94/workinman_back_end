@@ -1,5 +1,11 @@
 require("dotenv").config();
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const fs = require("fs");
 
 const bucketName = process.env.BUCKET_NAME;
@@ -45,3 +51,31 @@ function getFileStream(fileKey) {
   return s3.getObject(downloadParams).createReadStream();
 }
 exports.getFileStream = getFileStream;
+
+const getImageUrls = async (username, database) => {
+  const query = `select * from questions where username='${username}';`;
+  const rows = await new Promise((res, rej) => {
+    database.all(query, [], (err, rows) => {
+      if (err) {
+        rej(err);
+      } else {
+        res(rows);
+      }
+    });
+  });
+
+  for (const row of rows) {
+    const getObjectParams = {
+      Bucket: bucketName,
+      Key: row.image_name,
+    };
+
+    const command = new GetObjectCommand(getObjectParams);
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    row.imageUrl = url;
+  }
+  // console.log(rows);
+  return rows;
+};
+
+exports.getImageUrls = getImageUrls;
