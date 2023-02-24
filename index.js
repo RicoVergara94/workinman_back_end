@@ -12,6 +12,9 @@ const bcrypt = require("bcrypt");
 const multer = require("multer");
 const sharp = require("sharp");
 const { uploadFile, getFileStream, getImageUrls } = require("./s3");
+const http = require("http");
+const WebSocket = require("ws");
+const { WebSocketServer } = require("ws");
 
 const app = express();
 
@@ -218,7 +221,7 @@ app.get("/get-game", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
 });
 
@@ -297,3 +300,21 @@ const putCsvRecordsIntoQuestionTable = async (
 //     console.log(tables);
 //   }
 // );
+const wss = new WebSocketServer({ server: server, path: "/ws" });
+
+wss.on("connection", function connection(ws, req) {
+  ws.on("error", console.error);
+  // const username = req.url.split("?")[1].split("=")[1];
+  // console.log(username);
+
+  ws.on("message", function message(data, isBinary) {
+    // const messageWithUsername = `${username}: ${data.toString()}`;
+    wss.clients.forEach(function each(client) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(data, { binary: isBinary });
+        // client.send(messageWithUsername, { binary: isBinary });
+      }
+      console.log(wss.clients);
+    });
+  });
+});
