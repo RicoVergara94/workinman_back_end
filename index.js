@@ -56,8 +56,12 @@ app.get("/", (req, res) => {
 
 app.post("/", async (req, res) => {
   const { username, password } = req.body;
-
   const usernameData = await authenticateUsernamePromise(db, username);
+  // console.log(usernameData);
+  if (!usernameData) {
+    res.status(404).send("the username is invalid");
+    return;
+  }
   const { salt } = await new Promise((res, rej) => {
     const query = `select * from users where username='${username}';`;
     db.get(query, [], (err, rows) => {
@@ -127,9 +131,7 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/delete/username", async (req, res) => {
-  console.log("here in delete/username");
   const { username } = req.body;
-  console.log("this is username in the delete account page: " + username);
   const row = await authenticateUsernamePromise(db, username);
   if (row) {
     console.log("user is in database");
@@ -140,12 +142,8 @@ app.post("/delete/username", async (req, res) => {
   }
 });
 app.post("/delete/password", async (req, res) => {
-  console.log("here in delete/password");
   const { username, password } = req.body;
-  console.log("this is username in the delete account page: " + username);
-  console.log("this is password in the delete account page: " + password);
   const { salt } = await getSaltPromise(db, username);
-  // console.log(salt);
   const passwordAndSaltHash = await hashPasswordWithSalt(password, salt);
   const row = await authenticateUsernameAndPasswordPromise(
     db,
@@ -156,7 +154,7 @@ app.post("/delete/password", async (req, res) => {
     console.log("user and password are in database");
     res.status(200).send("username and password are in database");
     const deletedRow = await deleteRecordPromise(db, username);
-    console.log(deletedRow);
+    // console.log(deletedRow);
     console.log("user account was deleted");
   } else {
     console.log("user and password are NOT in database");
@@ -166,17 +164,11 @@ app.post("/delete/password", async (req, res) => {
 
 app.post("/upload-image", upload.single("image"), async (req, res) => {
   const file = req.file;
-  // edit the images with dependency
-  // console.log(req.body.username);
-  // we need to encrypt the username with the originalname
   const username = req.body.username;
-
+  const resImageName = req.file.originalname;
   const imageName = req.file.originalname;
   const encryptedImageName = hashImageNameAndUsername(imageName, username);
-  // console.log(encryptedImageName);
-
   req.file.originalname = encryptedImageName;
-  // console.log(req.file);
   const buffer = await sharp(file.buffer)
     .resize({ height: 279, width: 446, fit: "contain" })
     .toBuffer();
@@ -184,7 +176,7 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
   file.buffer = buffer;
   try {
     await uploadFile(file);
-    res.status(200).send("Image uplsoaded successfully!");
+    res.status(200).send(`${resImageName} uploaded successfully!`);
   } catch (e) {
     console.log("Error message: " + e);
     res.status(500).send("failed to upload image");
@@ -192,10 +184,6 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
 });
 
 app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
-  // const csvContent = req.file.buffer.toString();
-  // console.log(csvContent);
-  // we need to get the username included in the request body
-
   const tempResults = [];
   const username = req.body.username;
   const bufferStream = new Readable();
@@ -204,11 +192,7 @@ app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
   await bufferStream
     .pipe(csv())
     .on("data", (data) => tempResults.push(data))
-    .on("end", () => {
-      // console.log(results);
-    });
-
-  // console.log(results);
+    .on("end", () => {});
 
   const results = tempResults.map((e) => {
     return {
@@ -222,9 +206,6 @@ app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
       "Image File Name": Object.values(e)[7],
     };
   });
-
-  // need to put the data into the table
-  // bring in the username from the client
   await putCsvRecordsIntoQuestionTable(results, username, db);
 });
 
