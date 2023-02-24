@@ -10,6 +10,7 @@ const { urlencoded } = require("express");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
+const sharp = require("sharp");
 const { uploadFile, getFileStream, getImageUrls } = require("./s3");
 
 const app = express();
@@ -175,10 +176,15 @@ app.post("/upload-image", upload.single("image"), async (req, res) => {
   // console.log(encryptedImageName);
 
   req.file.originalname = encryptedImageName;
-  console.log(req.file);
+  // console.log(req.file);
+  const buffer = await sharp(file.buffer)
+    .resize({ height: 279, width: 446, fit: "contain" })
+    .toBuffer();
+
+  file.buffer = buffer;
   try {
     await uploadFile(file);
-    res.status(200).send("Image uploaded successfully!");
+    res.status(200).send("Image uplsoaded successfully!");
   } catch (e) {
     console.log("Error message: " + e);
     res.status(500).send("failed to upload image");
@@ -190,24 +196,36 @@ app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
   // console.log(csvContent);
   // we need to get the username included in the request body
 
-  const results = [];
+  const tempResults = [];
   const username = req.body.username;
   const bufferStream = new Readable();
   bufferStream.push(req.file.buffer);
   bufferStream.push(null);
   await bufferStream
     .pipe(csv())
-    .on("data", (data) => results.push(data))
+    .on("data", (data) => tempResults.push(data))
     .on("end", () => {
       // console.log(results);
     });
 
   // console.log(results);
 
+  const results = tempResults.map((e) => {
+    return {
+      "Question ID": Object.values(e)[0],
+      "Question Text": Object.values(e)[1],
+      "Correct Answer": Object.values(e)[2],
+      "Incorrect Answer 1": Object.values(e)[3],
+      "Incorrect Answer 2": Object.values(e)[4],
+      "Incorrect Answer 3": Object.values(e)[5],
+      "Difficulty Level": Object.values(e)[6],
+      "Image File Name": Object.values(e)[7],
+    };
+  });
+
   // need to put the data into the table
   // bring in the username from the client
   await putCsvRecordsIntoQuestionTable(results, username, db);
-  console.log("before the table function");
 });
 
 app.get("/get-game", async (req, res) => {
@@ -243,7 +261,6 @@ const putCsvRecordsIntoQuestionTable = async (
   username,
   database
 ) => {
-  console.log("inside heyuh");
   for (const record of recordArray) {
     let {
       "Question ID": questionId,
