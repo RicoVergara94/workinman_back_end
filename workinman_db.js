@@ -8,7 +8,6 @@ let db = new sqlite3.Database(
   sqlite3.OPEN_READWRITE,
   (err) => {
     if (err && err.code === "SQLITE_CANTOPEN") {
-      console.log("we're inside here right now");
       console.log(err);
       createDatabase();
       return;
@@ -22,7 +21,6 @@ let db = new sqlite3.Database(
 const createDatabase = () => {
   let newdb = new sqlite3.Database("./workinman_db.db", (err) => {
     if (err) {
-      // console.log("We're inside here right now " + err);
       console.log("Getting error " + err);
       exit(1);
     }
@@ -31,7 +29,6 @@ const createDatabase = () => {
 };
 
 const createTables = (newdb) => {
-  // may need to make id not null again if autoincrement doesn't work
   newdb.exec(
     `
     create table users (
@@ -40,10 +37,7 @@ const createTables = (newdb) => {
         password text not null,
         salt text not null
     );
-    insert into users (username, password, salt)
-        values ('oscar.vergara1994@gmail.com', 'Hello123', 'saltOne'),
-               ('ricardo.vergara1994@gmail.com', 'password123', 'saltTwo'),
-               ('rico.vergara1994@gmail.com', 'Hakuna', 'saltThree');
+
 
 
     create table questions (
@@ -65,7 +59,6 @@ const createTables = (newdb) => {
 const runQueries = (db, queries) => {
   queries.map((query) => {
     db.all(query, (err, rows) => {
-      // console.log("this is rows: " + rows);
       rows.forEach((row) => {
         console.log(row);
       });
@@ -79,11 +72,6 @@ const runQuery = (db, query) => {
   });
 };
 
-// const authenticate = (db, query) => {
-//   db.get(query, [], (res) => {
-//     console.log(res);
-//   });
-// };
 const doesUsernameExistInDbPromise = async (db, username) => {
   const query = `SELECT username FROM users WHERE username = '${username}';`;
   return new Promise((res, rej) => {
@@ -123,7 +111,6 @@ const authenticatePassword = (db, query, passwordValue) => {
   });
 };
 const authenticateUsernameAndPassword = (
-  // may not need this function any longer
   db,
   query,
   usernameAndPasswordAuthenticated
@@ -199,36 +186,6 @@ const deleteRecordPromise = async (db, username) => {
     });
   });
 };
-// const runQueries = (db, query) => {
-//   query.map((row) => {
-//     db.run(row, [], () => console.log(row));
-//   });
-// };
-// createTables(db);
-// runQueries(db);
-
-// if (runQueries(db)) {
-//   console.log("the value isn't null");
-// } else {
-//   console.log("value is null");
-// }
-
-// if (runFooQueries(db)) {
-//   console.log("the value isn't null");
-// } else {
-//   console.log("value is null");
-// }
-
-// const queries = [
-//   `
-// select username from users where username = 'oscar.vergara1994@gmail.com';
-// `,
-//   `
-// select password from users where password = 'Hello123';
-// `,
-// ];
-
-// queries.map((query) => runQueries(db, query));
 
 const getSaltPromise = async (db, username) => {
   const query = `select salt from users where username='${username}';`;

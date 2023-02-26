@@ -60,7 +60,7 @@ app.get("/", (req, res) => {
 app.post("/", async (req, res) => {
   const { username, password } = req.body;
   const usernameData = await authenticateUsernamePromise(db, username);
-  // console.log(usernameData);
+
   if (!usernameData) {
     res.status(404).send("the username is invalid");
     return;
@@ -157,7 +157,7 @@ app.post("/delete/password", async (req, res) => {
     console.log("user and password are in database");
     res.status(200).send("username and password are in database");
     const deletedRow = await deleteRecordPromise(db, username);
-    // console.log(deletedRow);
+
     console.log("user account was deleted");
   } else {
     console.log("user and password are NOT in database");
@@ -168,6 +168,10 @@ app.post("/delete/password", async (req, res) => {
 app.post("/upload-image", upload.single("image"), async (req, res) => {
   const file = req.file;
   const username = req.body.username;
+  if (!req.file) {
+    res.status(400).send("image failed to upload");
+    return;
+  }
   const resImageName = req.file.originalname;
   const imageName = req.file.originalname;
   const encryptedImageName = hashImageNameAndUsername(imageName, username);
@@ -190,6 +194,10 @@ app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
   const tempResults = [];
   const username = req.body.username;
   const bufferStream = new Readable();
+  if (!req.file) {
+    res.status(400).send("csv file failed to upload");
+    return;
+  }
   bufferStream.push(req.file.buffer);
   bufferStream.push(null);
   await bufferStream
@@ -210,6 +218,7 @@ app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
     };
   });
   await putCsvRecordsIntoQuestionTable(results, username, db);
+  res.status(200).send("file uploaded successfully");
 });
 
 app.get("/get-game", async (req, res) => {
@@ -304,17 +313,13 @@ const wss = new WebSocketServer({ server: server, path: "/ws" });
 
 wss.on("connection", function connection(ws, req) {
   ws.on("error", console.error);
-  // const username = req.url.split("?")[1].split("=")[1];
-  // console.log(username);
 
   ws.on("message", function message(data, isBinary) {
-    // const messageWithUsername = `${username}: ${data.toString()}`;
     wss.clients.forEach(function each(client) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(data, { binary: isBinary });
-        // client.send(messageWithUsername, { binary: isBinary });
+        // console.log(data.toString());
       }
-      console.log(wss.clients);
     });
   });
 });
