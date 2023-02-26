@@ -217,6 +217,8 @@ app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
       "Image File Name": Object.values(e)[7],
     };
   });
+
+  console.log(results);
   await putCsvRecordsIntoQuestionTable(results, username, db);
   res.status(200).send("file uploaded successfully");
 });
@@ -323,3 +325,7 @@ wss.on("connection", function connection(ws, req) {
     });
   });
 });
+
+module.exports = {
+  putCsvRecordsIntoQuestionTable,
+};
